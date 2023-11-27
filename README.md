@@ -1,2 +1,2 @@
 # inventorymanagement
-Inventory Management system
+Inventory Management systems
