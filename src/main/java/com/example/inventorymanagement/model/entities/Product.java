@@ -1,26 +1,28 @@
-package com.example.inventorymanagement.entities;
+package com.example.inventorymanagement.model.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.util.List;
 
 @Entity
-@Table(name = "Category")
+@Table(name = "Product")
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class Category {
+public class Product extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
-
     @Column(name = "name")
     private String name;
+    @Column(name = "categoryId")
+    private int categoryId;
+    @Column(name = "quantity")
+    private int quantity;
+    @Column(name = "criticalLevel")
+    private int criticalLevel;
 
-    @Column(name = "products")
-    private List<Integer> products;
 }
