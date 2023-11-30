@@ -47,6 +47,8 @@ You can generate requests with dummy data.
 
 Then visit http://localhost:8080/swagger-ui/index.html in your browser to explore the Swagger API documentation and use requests.
 
+[Click Here For Postman Collection.zip](https://github.com/erbilcolak90/inventorymanagement/files/13511147/inventorymanagement-postman-collection.zip)
+
 ---
 
 ### Entities
