@@ -37,11 +37,9 @@ Start the project by using the command
 
 >``` docker-compose up -d or docker-compose up```
 
-
-After ensuring that the containers are up and running with Docker Compose, 
-proceed to http://localhost:8081/index.php?route=/import to access phpMyAdmin. 
-
-Import the 'inventorymanagement.sql' database located in the project directory. 
+inventorymanagement.sql file will be uploaded automatically and will be ready for use as a database.
+After ensuring that the containers are up and running with Docker Compose,
+Please check database proceed to http://localhost:8081/ to access phpMyAdmin. 
 
 You can generate requests with dummy data.
 
