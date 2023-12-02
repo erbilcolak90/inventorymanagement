@@ -11,10 +11,11 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
+-- settings character sets
+/*!40101 SET NAMES 'utf8' */;
+/*!40101 SET CHARACTER_SET_CLIENT = 'utf8' */;
+/*!40101 SET CHARACTER_SET_RESULTS = 'utf8' */;
+/*!40101 SET COLLATION_CONNECTION = 'utf8_general_ci' */;
 
 --
 -- Veritabanı: `inventorymanagement`
@@ -27,7 +28,7 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `category` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL ,
   `create_date` datetime DEFAULT NULL,
   `is_deleted` tinyint(1) DEFAULT NULL,
   `update_date` datetime DEFAULT NULL,
@@ -61,18 +62,14 @@ CREATE TABLE `hibernate_sequence` (
 --
 
 INSERT INTO `hibernate_sequence` (`next_val`) VALUES
-(15),
-(15),
-(15),
-(1),
-(1),
 (1);
 
 COMMIT;
 
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40101 SET NAMES 'utf8' */;
+/*!40101 SET CHARACTER_SET_CLIENT = 'utf8' */;
+/*!40101 SET CHARACTER_SET_RESULTS = 'utf8' */;
+/*!40101 SET COLLATION_CONNECTION = 'utf8_general_ci' */;
 -- --------------------------------------------------------
 
 -- --------------------------------------------------------
@@ -253,6 +250,7 @@ ALTER TABLE `store_products`
 
 COMMIT;
 
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40101 SET NAMES 'utf8' */;
+/*!40101 SET CHARACTER_SET_CLIENT = 'utf8' */;
+/*!40101 SET CHARACTER_SET_RESULTS = 'utf8' */;
+/*!40101 SET COLLATION_CONNECTION = 'utf8_general_ci' */;

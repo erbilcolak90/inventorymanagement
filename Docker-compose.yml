@@ -3,7 +3,7 @@ version: '3'
 services:
   mysqldb:
     container_name: mysqldb
-    image: mysql
+    image: mysql:latest
     environment:
       MYSQL_USER: db_user
       MYSQL_PASSWORD: db_password
@@ -11,6 +11,8 @@ services:
       MYSQL_ROOT_PASSWORD: root
     ports:
       - 3306:3306
+    volumes:
+      - ./inventorymanagement.sql:/docker-entrypoint-initdb.d/inventorymanagement.sql
     networks:
       - springboot-mysql-net
 
