@@ -9,6 +9,7 @@ import com.example.inventorymanagement.model.dto.inputs.RemoveProductToStoreInpu
 import com.example.inventorymanagement.model.enums.Actions;
 import com.example.inventorymanagement.repository.ProductRepository;
 import com.example.inventorymanagement.repository.StoreRepository;
+import com.example.inventorymanagement.service.eventservice.InventoryAlertService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

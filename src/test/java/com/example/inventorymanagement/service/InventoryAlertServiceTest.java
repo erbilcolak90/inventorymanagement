@@ -2,6 +2,7 @@ package com.example.inventorymanagement.service;
 
 
 import com.example.inventorymanagement.model.entities.Product;
+import com.example.inventorymanagement.service.eventservice.InventoryAlertService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
