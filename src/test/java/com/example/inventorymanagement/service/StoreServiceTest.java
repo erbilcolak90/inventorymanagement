@@ -14,6 +14,7 @@ import com.example.inventorymanagement.model.enums.Cities;
 import com.example.inventorymanagement.model.enums.Regions;
 import com.example.inventorymanagement.repository.ProductRepository;
 import com.example.inventorymanagement.repository.StoreRepository;
+import com.example.inventorymanagement.service.eventservice.InventoryAlertService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
