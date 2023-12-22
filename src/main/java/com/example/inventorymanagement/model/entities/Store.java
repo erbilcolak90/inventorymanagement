@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.util.Map;
+import java.util.List;
 
 @Entity
 @Table(name = "Store")
@@ -19,19 +19,22 @@ public class Store extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
     @Column(name = "name")
     private String name;
+
     @Column(name = "address")
     private String address;
+
     @Column(name = "region")
     @Enumerated(EnumType.STRING)
     private Regions region;
+
     @Column(name = "city")
     @Enumerated(EnumType.STRING)
     private Cities city;
-    @ElementCollection
-    @CollectionTable(name = "store_products",joinColumns = @JoinColumn(name = "storeId"))
-    @MapKeyColumn(name = "productId")
-    @Column(name = "quantity")
-    private Map<Integer,Integer> products;
+
+    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Product> products;
+
 }
