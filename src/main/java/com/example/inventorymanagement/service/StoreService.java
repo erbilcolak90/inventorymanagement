@@ -8,6 +8,7 @@ import com.example.inventorymanagement.model.dto.inputs.CreateStoreInput;
 import com.example.inventorymanagement.model.dto.inputs.RemoveProductToStoreInput;
 import com.example.inventorymanagement.model.enums.Actions;
 import com.example.inventorymanagement.repository.ProductRepository;
+import com.example.inventorymanagement.repository.StoreProductsRepository;
 import com.example.inventorymanagement.repository.StoreRepository;
 import com.example.inventorymanagement.service.eventservice.InventoryAlertService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final ProductRepository productRepository;
     private final InventoryAlertService inventoryAlertService;
+    private final StoreProductsRepository storeProductsRepository;
     private final LogService logService;
 
     @Transactional
@@ -38,7 +40,7 @@ public class StoreService {
             newStore.setCity(createStoreInput.getCity());
             newStore.setRegion(createStoreInput.getRegion());
             storeRepository.save(newStore);
-            logService.logInfo(Actions.CREATE_STORE.name()+" "+" Store Id : " + newStore.getId());
+            logService.logInfo(Actions.CREATE_STORE.name() + " " + " Store Id : " + newStore.getId());
             return newStore;
 
         } else {
@@ -63,14 +65,15 @@ public class StoreService {
 
         }
 
+        boolean existsProductInStore = storeRepository.existsProductInStore(dbStore.getId(), dbProduct.getId());
+
+        if (existsProductInStore) {
+            storeProductsRepository.updateStoreProductQuantity(dbStore.getId(), dbProduct.getId(), inputQuantity);
+        }
+
         // if store contains productId. added to the existing quantity with input quantity
-        if (dbStore.getProducts().containsKey(inputProductId)) {
-            int quantityStore = dbStore.getProducts().get(inputProductId);
-            dbStore.getProducts().put(inputProductId, quantityStore + inputQuantity);
-
-
-        } else {
-            dbStore.getProducts().put(inputProductId, inputQuantity);
+        else {
+            dbStore.getProducts().add(dbProduct);
         }
 
         // product quantity update after added process.
@@ -86,7 +89,7 @@ public class StoreService {
         dbStore.setUpdateDate(new Date());
         storeRepository.save(dbStore);
 
-        logService.logInfo(Actions.ADD_PRODUCT_TO_STORE.name() +" "+ addProductStoreInput.getQuantity() + " pieces of the product Id : " + dbProduct.getId() + " have been added to store Id : " + dbStore.getId());
+        logService.logInfo(Actions.ADD_PRODUCT_TO_STORE.name() + " " + addProductStoreInput.getQuantity() + " pieces of the product Id : " + dbProduct.getId() + " have been added to store Id : " + dbStore.getId());
 
         return dbStore;
     }
@@ -97,10 +100,12 @@ public class StoreService {
         Product dbProduct = productRepository.findByIdAndIsDeletedFalse(removeProductToStoreInput.getProductId()).orElseThrow(CustomExceptions::productNotFoundException);
         Store dbStore = storeRepository.findById(removeProductToStoreInput.getStoreId()).orElseThrow(CustomExceptions::storeNotFoundException);
 
-        if (dbStore.getProducts().containsKey(dbProduct.getId())) {
-            if (dbStore.getProducts().get(dbProduct.getId()) >= removeProductToStoreInput.getQuantity()) {
+        boolean existsProductInStore = storeRepository.existsProductInStore(dbProduct.getId(), dbStore.getId());
 
-                dbStore.getProducts().put(dbProduct.getId(), dbStore.getProducts().get(dbProduct.getId()) - removeProductToStoreInput.getQuantity());
+        if (existsProductInStore) {
+            boolean result = storeProductsRepository.removeProductInStore(dbProduct.getId(), dbProduct.getId(), (removeProductToStoreInput.getQuantity()));
+
+            if (result) {
                 dbStore.setUpdateDate(new Date());
                 storeRepository.save(dbStore);
 
@@ -108,13 +113,12 @@ public class StoreService {
                 dbProduct.setUpdateDate(new Date());
                 productRepository.save(dbProduct);
 
-                logService.logInfo(Actions.REMOVE_PRODUCT_TO_STORE.name()+" "+removeProductToStoreInput.getQuantity() + " pieces of the product Id : " + dbProduct.getId() + " have been removed to store Id : " + dbStore.getId());
-
-                return dbStore;
+                logService.logInfo(Actions.REMOVE_PRODUCT_TO_STORE.name() + " " + removeProductToStoreInput.getQuantity() + " pieces of the product Id : " + dbProduct.getId() + " have been removed to store Id : " + dbStore.getId());
             } else {
                 throw CustomExceptions.productQuantityAtStoreLessThanInputQuantityException();
             }
 
+            return dbStore;
         } else {
             throw CustomExceptions.productNotInTheStoreException();
         }

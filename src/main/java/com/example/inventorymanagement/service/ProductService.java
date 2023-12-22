@@ -41,7 +41,7 @@ public class ProductService {
         return dbProduct;
     }
 
-    public List<Store> getProductsByStoreAttribute(GetProductByStoreAttributeInput getProductByStoreAttributeInput) {
+   /* public List<Store> getProductsByStoreAttribute(GetProductByStoreAttributeInput getProductByStoreAttributeInput) {
         Product dbProduct = productRepository.findByIdAndIsDeletedFalse(getProductByStoreAttributeInput.getProductId()).orElseThrow(CustomExceptions::productNotFoundException);
         List<Integer> dbStoreIds = storeRepository.findStoreIdsByProductId(getProductByStoreAttributeInput.getProductId());
         List<Store> dbStoreList = storeRepository.findStoresByStoreIdsAndAttribute(dbStoreIds, getProductByStoreAttributeInput.getFilterField());
@@ -58,14 +58,15 @@ public class ProductService {
 
         return filteredStores;
     }
-
+*/
     @Transactional
     public Product createProduct(CreateProductInput createProductInput) throws CustomExceptions {
         Product dbProduct = productRepository.findByName(createProductInput.getName().toLowerCase()).orElse(null);
+        Category dbCategory= categoryRepository.findById(createProductInput.getCategoryId()).orElseThrow(CustomExceptions::categoryNotFoundException);
         if (dbProduct == null) {
             Product newProduct = new Product();
             newProduct.setName(createProductInput.getName().toLowerCase());
-            newProduct.setCategoryId(createProductInput.getCategoryId());
+            newProduct.setCategory(dbCategory);
             newProduct.setQuantity(createProductInput.getQuantity());
             newProduct.setCriticalLevel(createProductInput.getCriticalLevel());
             productRepository.save(newProduct);
@@ -140,7 +141,7 @@ public class ProductService {
         }
 
         if (updateProductInput.getCategoryId() != 0) {
-            product.setCategoryId(updateProductInput.getCategoryId());
+            Category dbCategory = categoryRepository.findById(updateProductInput.getCategoryId()).orElseThrow(CustomExceptions::categoryNotFoundException);
         }
 
         if (updateProductInput.getQuantity() != 0) {
