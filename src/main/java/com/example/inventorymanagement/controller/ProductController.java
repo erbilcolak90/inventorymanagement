@@ -1,9 +1,10 @@
 package com.example.inventorymanagement.controller;
 
+import com.example.inventorymanagement.model.dto.StoreProductDTO;
 import com.example.inventorymanagement.model.dto.inputs.*;
 import com.example.inventorymanagement.model.entities.Product;
-import com.example.inventorymanagement.model.entities.Store;
 import com.example.inventorymanagement.model.dto.payloads.DeleteProductPayload;
+import com.example.inventorymanagement.model.entities.StoreProduct;
 import com.example.inventorymanagement.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -39,14 +40,23 @@ public class ProductController {
         return ResponseEntity.ok(productService.updateProduct(updateProductInput));
     }
 
-    //Store name or store city or store region
-    @PostMapping("/getProductByStoreAttribute")
-    public ResponseEntity<List<Store>> getProductByStoreAttribute(@RequestBody GetProductByStoreAttributeInput getProductByStoreAttributeInput){
-        return ResponseEntity.ok(productService.getProductsByStoreAttribute(getProductByStoreAttributeInput));
+    @PostMapping("/getProductByRegion")
+    public ResponseEntity<List<StoreProductDTO>> getProductByRegion(@RequestBody GetProductsByRegionInput getProductsByRegionInput){
+        return ResponseEntity.ok(productService.getProductByRegion(getProductsByRegionInput));
+    }
+
+    @PostMapping("/getProductByCity")
+    public ResponseEntity<List<StoreProductDTO>> getProductByCity(@RequestBody GetProductsByCityInput getProductsByCityInput){
+        return ResponseEntity.ok(productService.getProductByCity(getProductsByCityInput));
     }
 
     @PostMapping("/getProductsByCategory")
     public ResponseEntity<Page<Product>> getProductsByCategory(@RequestBody GetProductsByCategoryInput getProductsByCategoryInput){
         return ResponseEntity.ok(productService.getProductsByCategory(getProductsByCategoryInput));
+    }
+
+    @PostMapping("/getProductInStore")
+    public ResponseEntity<StoreProduct> getProductInStore(@RequestBody GetProductInStoreInput getProductInStoreInput){
+        return ResponseEntity.ok(productService.getProductInStore(getProductInStoreInput));
     }
 }

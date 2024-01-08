@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-
 @Entity
 @Table(name = "Product")
 @AllArgsConstructor
@@ -20,19 +19,22 @@ public class Product extends BaseEntity{
     @Column(name = "name")
     private String name;
 
-    @ManyToOne
     @JoinColumn(name = "categoryId")
-    private Category category;
-
-    @ManyToOne
-    @JoinColumn(name = "storeId")
-    private Store store;
+    private int categoryId;
 
     @Column(name = "quantity")
     private int quantity;
 
     @Column(name = "criticalLevel")
     private int criticalLevel;
-
-
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", categoryId=" + categoryId +
+                ", quantity=" + quantity +
+                ", criticalLevel=" + criticalLevel +
+                '}';
+    }
 }

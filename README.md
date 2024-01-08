@@ -58,13 +58,13 @@ updateDate: Date
 isDeleted: boolean
 ````
 
-- Category:
+- Category
 
 ````
 id: int
 name: String
+products: List
 ````
-
 
 - Product
 ````
@@ -82,7 +82,14 @@ name : String
 address : String
 region : <Enum>
 city : <Enum>
-products : Map<Integer,Integer>
+````
+
+- StoreProduct
+````
+id: int
+store_id: int
+product_id: int
+quantity: int
 ````
 
 
@@ -98,69 +105,6 @@ RestController("/category)
 ---
 
 ## RestController("/product")
-
-### CreateProduct
-
-#### Request
-````
-method: POST
-url: /product/createProduct
-requestParams : -
-requestBody: CreateProductInput{
-
-categoryId: int
-criticalLevel: int
-name: String
-quantity: int
-
-}
-````
-
-### Response
-
-````
-{
-    {
-  "categoryId": 0,
-  "createDate": "2023-11-30T08:23:14.818Z",
-  "criticalLevel": 0,
-  "deleted": false,
-  "id": 0,
-  "name": "string",
-  "quantity": 0,
-  "updateDate": "2023-11-30T08:23:14.818Z"
-}
-}
-````
-
----
-
-### DeleteProduct
-
-#### Request
-````
-method: POST
-url: /product/deleteProduct
-requestParams : -
-requestBody: deleteProductInput{
-
-id: int
-
-}
-````
-
-### Response
-
-````
-{
-   {
-  "deleted": true,
-  "message": "string"
-}
-}
-````
-
----
 
 ### GetProductById
 
@@ -180,32 +124,30 @@ id: int
 
 ````
 {
-  {
-  "categoryId": 0,
-  "createDate": "2023-11-30T08:28:14.304Z",
-  "criticalLevel": 0,
-  "deleted": true,
-  "id": 0,
-  "name": "string",
-  "quantity": 0,
-  "updateDate": "2023-11-30T08:28:14.304Z"
-}
+  "createDate": "2023-12-20T20:00:27.000+00:00",
+  "updateDate": "2023-12-20T20:46:54.000+00:00",
+  "id": 1,
+  "name": "gömlek",
+  "categoryId": 1,
+  "quantity": 1000,
+  "criticalLevel": 2000,
+  "deleted": false
 }
 ````
 
 ---
 
-### GetProductByStoreAttribute
+### GetProductByCity
 
 #### Request
 ````
 method: POST
-url: /product/getProductByStoreAttribute
+url: /product/getProductByCity
 requestParams : -
-requestBody: getProductByStoreAttributeInput{
+requestBody: getProductsByCityInput{
 
 {
-  "filterField": "string", (this is city,region or name)
+  "city": "ADANA",
   "productId": 0
 }
 
@@ -216,22 +158,79 @@ requestBody: getProductByStoreAttributeInput{
 
 ````
 [
- {
+  {
     "address": "string",
     "city": "ADANA",
-    "createDate": "2023-11-30T08:29:29.268Z",
-    "deleted": true,
     "id": 0,
     "name": "string",
-    "products": {
-      "additionalProp1": 0,
-      "additionalProp2": 0,
-      "additionalProp3": 0
-    },
-    "region": "AKDENIZ",
-    "updateDate": "2023-11-30T08:29:29.268Z"
+    "product_id": 0,
+    "quantity": 0,
+    "region": "AKDENIZ"
   }
 ]
+````
+
+---
+
+### GetProductByRegion
+
+#### Request
+````
+method: POST
+url: /product/getProductByRegion
+requestParams : -
+requestBody: getProductsByRegionInput{
+
+{
+  "productId": 0,
+  "region": "AKDENIZ"
+}
+}
+````
+
+### Response
+
+````
+[
+  {
+    "address": "string",
+    "city": "ADANA",
+    "id": 0,
+    "name": "string",
+    "product_id": 0,
+    "quantity": 0,
+    "region": "AKDENIZ"
+  }
+]
+````
+
+---
+
+### GetProductInStore
+
+#### Request
+````
+method: POST
+url: /product/getProductInStore
+requestParams : -
+requestBody: getProductInStoreInput{
+
+{
+  "productId": 0,
+  "storeId": 0
+}
+}
+````
+
+### Response
+
+````
+{
+  "id": 0,
+  "product_id": 0,
+  "quantity": 0,
+  "store_id": 0
+}
 ````
 
 ---
@@ -306,6 +305,66 @@ requestBody: getProductsByCategoryInput{
 
 ---
 
+### CreateProduct
+
+#### Request
+````
+method: POST
+url: /product/createProduct
+requestParams : -
+requestBody: CreateProductInput{
+
+name: String
+categoryId: int
+quantity: int
+criticalLevel: int
+
+}
+````
+
+### Response
+
+````
+{
+  "createDate": "2024-01-07T19:12:14.090+00:00",
+  "updateDate": "2024-01-07T19:12:14.090+00:00",
+  "id": 8,
+  "name": "telefon",
+  "categoryId": 1,
+  "quantity": 100,
+  "criticalLevel": 10,
+  "deleted": false
+}
+````
+
+---
+
+### DeleteProduct
+
+#### Request
+````
+method: POST
+url: /product/deleteProduct
+requestParams : -
+requestBody: deleteProductInput{
+
+id: int
+
+}
+````
+
+### Response
+
+````
+
+   {
+  "deleted": true,
+  "message": "string"
+    }
+````
+
+---
+
 ### UpdateProduct
 
 #### Request
@@ -366,19 +425,10 @@ requestBody: addProductStoreInput{
 ````
 {
  {
-  "address": "string",
-  "city": "ADANA",
-  "createDate": "2023-11-30T08:36:17.729Z",
-  "deleted": true,
   "id": 0,
-  "name": "string",
-  "products": {
-    "additionalProp1": 0,
-    "additionalProp2": 0,
-    "additionalProp3": 0
-  },
-  "region": "AKDENIZ",
-  "updateDate": "2023-11-30T08:36:17.729Z"
+  "product_id": 0,
+  "quantity": 0,
+  "store_id": 0
 }
 }
 ````
@@ -409,17 +459,12 @@ requestBody: createStoreInput{
  {
   "address": "string",
   "city": "ADANA",
-  "createDate": "2023-11-30T08:37:24.189Z",
+  "createDate": "2024-01-08T13:07:11.937Z",
   "deleted": true,
   "id": 0,
   "name": "string",
-  "products": {
-    "additionalProp1": 0,
-    "additionalProp2": 0,
-    "additionalProp3": 0
-  },
   "region": "AKDENIZ",
-  "updateDate": "2023-11-30T08:37:24.189Z"
+  "updateDate": "2024-01-08T13:07:11.937Z"
 }
 }
 ````
@@ -447,19 +492,10 @@ requestBody: createStoreInput{
 ````
 {
 {
-  "address": "string",
-  "city": "ADANA",
-  "createDate": "2023-11-30T08:38:19.492Z",
-  "deleted": true,
   "id": 0,
-  "name": "string",
-  "products": {
-    "additionalProp1": 0,
-    "additionalProp2": 0,
-    "additionalProp3": 0
-  },
-  "region": "AKDENIZ",
-  "updateDate": "2023-11-30T08:38:19.492Z"
+  "product_id": 0,
+  "quantity": 0,
+  "store_id": 0
 }
 }
 ````
@@ -491,6 +527,7 @@ requestBody: createCategoryInput{
   "deleted": true,
   "id": 0,
   "name": "string",
+  "products": null,
   "updateDate": "2023-11-30T08:40:24.248Z"
 }
 }

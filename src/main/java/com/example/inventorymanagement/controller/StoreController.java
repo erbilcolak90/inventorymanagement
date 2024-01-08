@@ -4,6 +4,7 @@ import com.example.inventorymanagement.model.entities.Store;
 import com.example.inventorymanagement.model.dto.inputs.AddProductStoreInput;
 import com.example.inventorymanagement.model.dto.inputs.CreateStoreInput;
 import com.example.inventorymanagement.model.dto.inputs.RemoveProductToStoreInput;
+import com.example.inventorymanagement.model.entities.StoreProduct;
 import com.example.inventorymanagement.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +18,12 @@ public class StoreController {
     private final StoreService storeService;
 
     @PostMapping("/addProductToStore")
-    public ResponseEntity<Store> addProductToStore(@RequestBody AddProductStoreInput addProductStoreInput) {
+    public ResponseEntity<StoreProduct> addProductToStore(@RequestBody AddProductStoreInput addProductStoreInput) {
         return ResponseEntity.ok(storeService.addProductToStore(addProductStoreInput));
     }
 
     @PostMapping("/removeProductToStore")
-    public ResponseEntity<Store> removeProductToStore(@RequestBody RemoveProductToStoreInput removeProductToStoreInput) {
+    public ResponseEntity<StoreProduct> removeProductToStore(@RequestBody RemoveProductToStoreInput removeProductToStoreInput) {
         return ResponseEntity.ok(storeService.removeProductToStore(removeProductToStoreInput));
     }
 

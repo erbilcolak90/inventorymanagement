@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import java.util.Date;
-
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
