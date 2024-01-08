@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class InventoryAlertService {
 
-    private ApplicationEventPublisher eventPublisher;
+    private final ApplicationEventPublisher eventPublisher;
     @EventListener
     public void handleInventoryUpdateEvent(Product product) {
         int quantity = product.getQuantity();
@@ -22,9 +22,8 @@ public class InventoryAlertService {
 
         if (quantity < criticalLevel) {
             logCriticalLevelEvent(productId);
+            eventPublisher.publishEvent(new InventoryEvent(eventPublisher,product));
         }
-
-        eventPublisher.publishEvent(new InventoryEvent(eventPublisher,product));
 
     }
 

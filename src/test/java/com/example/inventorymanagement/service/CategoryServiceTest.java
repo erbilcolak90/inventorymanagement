@@ -16,10 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.transaction.annotation.Transactional;
 
 @ExtendWith(MockitoExtension.class)
-public class CategoryServiceTest {
+class CategoryServiceTest {
     @Mock
     private CategoryRepository categoryRepositoryMock;
     @Mock
@@ -38,7 +37,7 @@ public class CategoryServiceTest {
 
     @DisplayName("createCategory should be success and return Category")
     @Test
-    public void testCreateCategory_success() {
+    void testCreateCategory_success() {
         //Creation of variables
         CreateCategoryInput createCategoryInput = new CreateCategoryInput("existingcategory");
 
@@ -50,7 +49,6 @@ public class CategoryServiceTest {
         // Verify
         assertNotNull(createdCategory);
         assertEquals("existingcategory", createdCategory.getName());
-        assertNotNull(createdCategory.getId());
 
         // LogService method should be called once with the specified message
         verify(logService, times(1)).logInfo(Actions.CREATE_CATEGORY.name() + " Category Id : " + createdCategory.getId());
@@ -58,15 +56,14 @@ public class CategoryServiceTest {
 
     @DisplayName("createTestCategory should be failed with Category Already Exists Exception message")
     @Test
-    public void testCreateCategory_CategoryAlreadyExistsException() {
+    void testCreateCategory_CategoryAlreadyExistsException() {
         //creation of variables
         CreateCategoryInput createCategoryInput = new CreateCategoryInput("existingcategory");
 
         when(categoryRepositoryMock.findByName("existingcategory")).thenReturn(testCategory);
 
-        CustomExceptions exception = assertThrows(CustomExceptions.class, () -> {
-            categoryService.createCategory(createCategoryInput);
-        });
+        CustomExceptions exception = assertThrows(CustomExceptions.class, () ->
+                categoryService.createCategory(createCategoryInput));
 
         assertEquals("Category name is already exist", exception.getMessage());
 
@@ -74,7 +71,6 @@ public class CategoryServiceTest {
 
     @AfterEach
     void tearDown() {
-        // clear
-        Category testCategory = null;
+        testCategory = null;
     }
 }

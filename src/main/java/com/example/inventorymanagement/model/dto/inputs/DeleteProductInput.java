@@ -5,7 +5,6 @@ import lombok.Data;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-
 @AllArgsConstructor
 @Data
 public class DeleteProductInput {

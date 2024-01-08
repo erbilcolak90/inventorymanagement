@@ -5,20 +5,23 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-@Entity
-@Table(name = "history")
+
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
-public class LogEntity {
+@Entity
+@Table(name = "store_products")
+public class StoreProduct {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private int id;
 
-    @Column(name = "logLevel")
-    private String logLevel;
-
-    @Column(name = "logMessage")
-    private String logMessage;
+    @Column(name = "store_id")
+    private int store_id;
+    @Column(name = "product_id")
+    private int product_id;
+    @Column(name = "quantity")
+    private int quantity;
 }

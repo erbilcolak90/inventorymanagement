@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.List;
-
 @Entity
 @Table(name = "Store")
 @AllArgsConstructor
@@ -33,8 +32,5 @@ public class Store extends BaseEntity{
     @Column(name = "city")
     @Enumerated(EnumType.STRING)
     private Cities city;
-
-    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Product> products;
 
 }
