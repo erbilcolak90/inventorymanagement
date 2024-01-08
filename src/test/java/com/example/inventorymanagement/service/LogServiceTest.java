@@ -1,6 +1,5 @@
 package com.example.inventorymanagement.service;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.example.inventorymanagement.model.entities.LogEntity;
