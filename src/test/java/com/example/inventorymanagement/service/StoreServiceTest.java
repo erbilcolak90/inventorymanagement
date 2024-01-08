@@ -9,10 +9,12 @@ import com.example.inventorymanagement.model.dto.inputs.CreateStoreInput;
 import com.example.inventorymanagement.model.dto.inputs.RemoveProductToStoreInput;
 import com.example.inventorymanagement.model.entities.Product;
 import com.example.inventorymanagement.model.entities.Store;
+import com.example.inventorymanagement.model.entities.StoreProduct;
 import com.example.inventorymanagement.model.enums.Actions;
 import com.example.inventorymanagement.model.enums.Cities;
 import com.example.inventorymanagement.model.enums.Regions;
 import com.example.inventorymanagement.repository.ProductRepository;
+import com.example.inventorymanagement.repository.StoreProductRepository;
 import com.example.inventorymanagement.repository.StoreRepository;
 import com.example.inventorymanagement.service.eventservice.InventoryAlertService;
 import org.junit.jupiter.api.AfterEach;
@@ -25,13 +27,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 
 @ExtendWith(MockitoExtension.class)
-public class StoreServiceTest {
+class StoreServiceTest {
 
     @Mock
     private StoreRepository storeRepositoryMock;
@@ -40,6 +40,8 @@ public class StoreServiceTest {
     @Mock
     private InventoryAlertService inventoryAlertService;
     @Mock
+    private StoreProductRepository storeProductRepositoryMock;
+    @Mock
     private LogService logService;
     @InjectMocks
     private StoreService storeService;
@@ -47,6 +49,8 @@ public class StoreServiceTest {
     private Store testStore;
 
     private Product testProduct;
+
+    private StoreProduct testStoreProduct;
 
     @BeforeEach
     void setUp() {
@@ -62,11 +66,18 @@ public class StoreServiceTest {
         testStore.setDeleted(false);
         testProduct = new Product(1, "testproduct", 1, 100, 10);
 
+        testStoreProduct = new StoreProduct();
+        testStoreProduct.setId(1);
+        testStoreProduct.setStore_id(1);
+        testStoreProduct.setProduct_id(1);
+        testStoreProduct.setQuantity(100);
+
+
     }
 
     @DisplayName("createStore should be success and return created store")
     @Test
-    public void testCreateStore_success() {
+    void testCreateStore_success() {
         //Creation of variables
         CreateStoreInput createStoreInput = new CreateStoreInput("testStoreName", "testStoreAddress", Regions.AKDENIZ, Cities.ADANA);
 
@@ -78,15 +89,15 @@ public class StoreServiceTest {
         //Verify
         assertNotNull(createdStore);
         assertEquals("teststorename", createdStore.getName());
-        assertNotNull(createdStore.getId());
 
-        verify(logService, times(1)).logInfo(Actions.CREATE_STORE.name()+" "+" Store Id : " + createdStore.getId());
+        verify(logService, times(1)).logInfo(Actions.CREATE_STORE.name() + " " + " Store Id : " + createdStore.getId());
 
     }
 
+
     @DisplayName("createStore should be failed with StoreNameIsAlreadyExistException message")
     @Test
-    public void testCreateStore_storeNameIsAlreadyExistException() {
+    void testCreateStore_storeNameIsAlreadyExistException() {
         CreateStoreInput createStoreInput = new CreateStoreInput("testStoreName", "testStoreAddress", Regions.AKDENIZ, Cities.ADANA);
 
         when(storeRepositoryMock.findByName("teststorename")).thenReturn(testStore);
@@ -99,55 +110,83 @@ public class StoreServiceTest {
         verify(logService, never()).logInfo(anyString());
     }
 
-    @DisplayName("addProductToStore should be success")
+    @DisplayName("addProductToStore should be return StoreProducts success and if product exist in store")
     @Test
-    public void testAddProductToStore_success() {
+    void testAddProductToStore_success_productExistInStore() {
         AddProductStoreInput addProductStoreInput = new AddProductStoreInput(1, 1, 10);
-        Product savedProduct = new Product(1, "testproduct", 1, 90, 10);
-        Map<Integer, Integer> products = new HashMap<>();
-        testStore.setProducts(products);
-        testStore.getProducts().put(1, 0);
+        Product dbProduct = new Product(1, "testproduct", 1, 90, 10);
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(addProductStoreInput.getProductId())).thenReturn(Optional.ofNullable(testProduct));
         when(storeRepositoryMock.findById(addProductStoreInput.getStoreId())).thenReturn(Optional.ofNullable(testStore));
+        when(storeProductRepositoryMock.findByStore_idAndProduct_id(testStore.getId(), testProduct.getId())).thenReturn(Optional.of(testStoreProduct));
+
+        testStoreProduct.setQuantity(testStoreProduct.getQuantity() + addProductStoreInput.getQuantity());
+
+        when(storeProductRepositoryMock.save(any())).thenReturn(testStoreProduct);
+
         when(storeRepositoryMock.save(any())).thenReturn(testStore);
-        when(productRepositoryMock.save(any())).thenReturn(savedProduct);
+        when(productRepositoryMock.save(any())).thenReturn(testProduct);
 
-        Store result = storeService.addProductToStore(addProductStoreInput);
 
-        assertEquals(10, result.getProducts().get(1));
+        StoreProduct result = storeService.addProductToStore(addProductStoreInput);
 
-        verify(inventoryAlertService, times(1)).handleInventoryUpdateEvent(savedProduct);
-        verify(logService, times(1)).logInfo(Actions.ADD_PRODUCT_TO_STORE.name() +" "+ addProductStoreInput.getQuantity() + " pieces of the product Id : " + savedProduct.getId() + " have been added to store Id : " + testStore.getId());
+        assertEquals(testStoreProduct.getQuantity(), result.getQuantity());
+        assertEquals(testProduct.getQuantity(), dbProduct.getQuantity());
+
+        verify(inventoryAlertService, times(1)).handleInventoryUpdateEvent(testProduct);
+        verify(logService, times(1)).logInfo(Actions.ADD_PRODUCT_TO_STORE.name() + " " + addProductStoreInput.getQuantity() + " pieces of the product Id : " + testProduct.getId() + " have been added to store Id : " + testStore.getId());
 
     }
 
+    @DisplayName("addProductToStore should be return StoreProducts success and if product does not exist in store")
+    @Test
+    void testAddProductToStore_success_productDoesNotExistInStore() {
+        AddProductStoreInput addProductStoreInput = new AddProductStoreInput(1, 1, 10);
+        Product dbProduct = new Product(1, "testproduct", 1, 90, 10);
+        StoreProduct newStoreProduct = new StoreProduct(1, 1, 1, addProductStoreInput.getQuantity());
+
+        when(productRepositoryMock.findByIdAndIsDeletedFalse(addProductStoreInput.getProductId())).thenReturn(Optional.ofNullable(testProduct));
+        when(storeRepositoryMock.findById(addProductStoreInput.getStoreId())).thenReturn(Optional.ofNullable(testStore));
+        when(storeProductRepositoryMock.findByStore_idAndProduct_id(testStore.getId(), testProduct.getId())).thenReturn(Optional.empty());
+        when(storeProductRepositoryMock.save(any())).thenReturn(newStoreProduct);
+        when(storeRepositoryMock.save(any())).thenReturn(testStore);
+        when(productRepositoryMock.save(any())).thenReturn(dbProduct);
+
+        StoreProduct result = storeService.addProductToStore(addProductStoreInput);
+
+        assertEquals(newStoreProduct.getQuantity(), result.getQuantity());
+
+        verify(inventoryAlertService, times(1)).handleInventoryUpdateEvent(testProduct);
+        verify(logService, times(1)).logInfo(Actions.ADD_PRODUCT_TO_STORE.name() + " " + addProductStoreInput.getQuantity() + " pieces of the product Id : " + testProduct.getId() + " have been added to store Id : " + testStore.getId());
+
+    }
+
+
     @DisplayName("addProductToStore should be failed with Product Not Found message")
     @Test
-    public void testAddProductToStore_productNotFoundException() {
+    void testAddProductToStore_failed_productNotFoundException() {
         AddProductStoreInput addProductStoreInput = new AddProductStoreInput(1, 1, 10);
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(addProductStoreInput.getProductId())).thenReturn(Optional.empty());
 
-        CustomExceptions exception = assertThrows(CustomExceptions.class, () -> {
-            storeService.addProductToStore(addProductStoreInput);
-        });
+        CustomExceptions exception = assertThrows(CustomExceptions.class, () -> storeService.addProductToStore(addProductStoreInput));
 
         assertEquals("Product is not found", exception.getMessage());
 
     }
 
+
     @DisplayName("addProductToStore should be failed with Store Not Found message")
     @Test
-    public void testAddProductToStore_StoreNotFoundException() {
+    void testAddProductToStore_StoreNotFoundException() {
         AddProductStoreInput addProductStoreInput = new AddProductStoreInput(1, 1, 10);
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(addProductStoreInput.getProductId())).thenReturn(Optional.ofNullable(testProduct));
         when(storeRepositoryMock.findById(addProductStoreInput.getStoreId())).thenReturn(Optional.empty());
 
-        CustomExceptions exception = assertThrows(CustomExceptions.class, () -> {
-            storeService.addProductToStore(addProductStoreInput);
-        });
+        CustomExceptions exception = assertThrows(CustomExceptions.class, () ->
+                storeService.addProductToStore(addProductStoreInput)
+        );
 
         assertEquals("Store not found", exception.getMessage());
 
@@ -155,50 +194,50 @@ public class StoreServiceTest {
 
     @DisplayName("addProductToStore should be failed with Product Quantity Less Than Input Quantity Exception message")
     @Test
-    public void testAddProductToStore_productQuantityLessThanInputQuantityException() {
+    void testAddProductToStore_failed_productQuantityLessThanInputQuantityException() {
         AddProductStoreInput addProductStoreInput = new AddProductStoreInput(1, 1, 101);
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(addProductStoreInput.getProductId())).thenReturn(Optional.ofNullable(testProduct));
         when(storeRepositoryMock.findById(addProductStoreInput.getStoreId())).thenReturn(Optional.ofNullable(testStore));
 
-        CustomExceptions exception = assertThrows(CustomExceptions.class, () -> {
-            storeService.addProductToStore(addProductStoreInput);
-        });
+        CustomExceptions exception = assertThrows(CustomExceptions.class, () ->
+                storeService.addProductToStore(addProductStoreInput)
+        );
 
         assertEquals("Product quantity may greater than input quantity", exception.getMessage());
     }
 
     @DisplayName("removeProductToStore should be success and return Store")
     @Test
-    public void testRemoveProductToStore_success() {
+    void testRemoveProductToStore_success() {
         RemoveProductToStoreInput removeProductToStoreInput = new RemoveProductToStoreInput(1, 1, 10);
-        Map<Integer, Integer> products = new HashMap<>();
-        testStore.setProducts(products);
-        testStore.getProducts().put(1, 100);
+
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(removeProductToStoreInput.getProductId())).thenReturn(Optional.ofNullable(testProduct));
         when(storeRepositoryMock.findById(removeProductToStoreInput.getStoreId())).thenReturn(Optional.ofNullable(testStore));
+        when(storeProductRepositoryMock.findByStore_idAndProduct_id(testStore.getId(), testProduct.getId())).thenReturn(Optional.ofNullable(testStoreProduct));
+
         when(storeRepositoryMock.save(any())).thenReturn(testStore);
         when(productRepositoryMock.save(any())).thenReturn(testProduct);
 
-        Store result = storeService.removeProductToStore(removeProductToStoreInput);
+        StoreProduct result = storeService.removeProductToStore(removeProductToStoreInput);
 
-        assertEquals(90, result.getProducts().get(1));
+        assertEquals(90, result.getQuantity());
         assertEquals(110, testProduct.getQuantity());
 
-        verify(logService, times(1)).logInfo(Actions.REMOVE_PRODUCT_TO_STORE.name()+" "+removeProductToStoreInput.getQuantity() + " pieces of the product Id : " + testProduct.getId() + " have been removed to store Id : " + testStore.getId());
+        verify(logService, times(1)).logInfo(Actions.REMOVE_PRODUCT_TO_STORE.name() + " " + removeProductToStoreInput.getQuantity() + " pieces of the product Id : " + testProduct.getId() + " have been removed to store Id : " + testStore.getId());
     }
 
     @DisplayName("removeProductToStore should be failed with Product Not Found message")
     @Test
-    public void testRemoveProductToStore_productNotFoundException() {
+    void testRemoveProductToStore_failed_productNotFoundException() {
         RemoveProductToStoreInput removeProductToStoreInput = new RemoveProductToStoreInput(1, 1, 10);
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(removeProductToStoreInput.getProductId())).thenReturn(Optional.empty());
 
-        CustomExceptions exception = assertThrows(CustomExceptions.class, () -> {
-            storeService.removeProductToStore(removeProductToStoreInput);
-        });
+        CustomExceptions exception = assertThrows(CustomExceptions.class, () ->
+                storeService.removeProductToStore(removeProductToStoreInput)
+        );
 
         assertEquals("Product is not found", exception.getMessage());
 
@@ -206,49 +245,47 @@ public class StoreServiceTest {
 
     @DisplayName("removeProductToStore should be failed with Store Not Found message")
     @Test
-    public void testRemoveProductToStore_StoreNotFoundException() {
+    void testRemoveProductToStore_failed_StoreNotFoundException() {
         RemoveProductToStoreInput removeProductToStoreInput = new RemoveProductToStoreInput(1, 1, 10);
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(removeProductToStoreInput.getProductId())).thenReturn(Optional.of(testProduct));
         when(storeRepositoryMock.findById(removeProductToStoreInput.getStoreId())).thenReturn(Optional.empty());
 
-        CustomExceptions exception = assertThrows(CustomExceptions.class, () -> {
-            storeService.removeProductToStore(removeProductToStoreInput);
-        });
+        CustomExceptions exception = assertThrows(CustomExceptions.class, () ->
+                storeService.removeProductToStore(removeProductToStoreInput));
 
         assertEquals("Store not found", exception.getMessage());
 
     }
 
-    @DisplayName("removeProductToStore should fail with Product Quantity At Store Less Than Input Quantity Exception message")
+
+    @DisplayName("removeProductToStore should failed with Product Quantity At Store Less Than Input Quantity Exception message")
     @Test
-    public void testRemoveProductToStore_productQuantityAtStoreLessThanInputQuantityException() {
-        RemoveProductToStoreInput removeProductToStoreInput = new RemoveProductToStoreInput(1, 1, 10);
-        Map<Integer, Integer> products = new HashMap<>();
-        testStore.setProducts(products);
-        testStore.getProducts().put(1, 9);
+    void testRemoveProductToStore_failed_productQuantityAtStoreLessThanInputQuantityException() {
+        RemoveProductToStoreInput removeProductToStoreInput = new RemoveProductToStoreInput(1, 1, 200);
+
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(removeProductToStoreInput.getProductId())).thenReturn(Optional.ofNullable(testProduct));
         when(storeRepositoryMock.findById(removeProductToStoreInput.getStoreId())).thenReturn(Optional.ofNullable(testStore));
+        when(storeProductRepositoryMock.findByStore_idAndProduct_id(testStore.getId(), testProduct.getId())).thenReturn(Optional.ofNullable(testStoreProduct));
 
-        CustomExceptions exception = assertThrows(CustomExceptions.class, () -> {
-            storeService.removeProductToStore(removeProductToStoreInput);
-        });
+
+        CustomExceptions exception = assertThrows(CustomExceptions.class, () ->
+                storeService.removeProductToStore(removeProductToStoreInput));
 
         assertEquals("Quantity from Input may less or equal to product quantity at store", exception.getMessage());
 
     }
 
+
     @DisplayName("removeProductToStore should be failed with product Not In The Store Exception message")
     @Test
-    public void testRemoveProductToStore_productNotInTheStoreException() {
+    void testRemoveProductToStore_failed_productNotInTheStoreException() {
         RemoveProductToStoreInput removeProductToStoreInput = new RemoveProductToStoreInput(1, 1, 0);
-        Map<Integer, Integer> products = new HashMap<>();
-        testStore.setProducts(products);
-        testStore.getProducts().put(2, 10);
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(removeProductToStoreInput.getProductId())).thenReturn(Optional.ofNullable(testProduct));
         when(storeRepositoryMock.findById(removeProductToStoreInput.getStoreId())).thenReturn(Optional.ofNullable(testStore));
+        when(storeProductRepositoryMock.findByStore_idAndProduct_id(testStore.getId(), testProduct.getId())).thenReturn(Optional.empty());
 
         CustomExceptions exception = assertThrows(CustomExceptions.class, () ->
                 storeService.removeProductToStore(removeProductToStoreInput)
@@ -257,7 +294,6 @@ public class StoreServiceTest {
         assertEquals("The product is not in the store", exception.getMessage());
 
     }
-
 
     @AfterEach
     void tearDown() {

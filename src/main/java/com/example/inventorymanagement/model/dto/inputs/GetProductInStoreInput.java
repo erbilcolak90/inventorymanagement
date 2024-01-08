@@ -6,12 +6,16 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
-public class GetProductByIdInput {
+public class GetProductInStoreInput {
 
     @Min(value = 0)
     @Max(value = Integer.MAX_VALUE)
-    private int id;
+    private int storeId;
+    @Min(value = 0)
+    @Max(value = Integer.MAX_VALUE)
+    private int productId;
 }

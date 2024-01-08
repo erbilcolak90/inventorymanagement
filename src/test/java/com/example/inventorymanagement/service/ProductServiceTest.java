@@ -4,15 +4,20 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.example.inventorymanagement.exception.CustomExceptions;
+import com.example.inventorymanagement.model.dto.StoreProductDTO;
 import com.example.inventorymanagement.model.dto.inputs.*;
 import com.example.inventorymanagement.model.dto.payloads.DeleteProductPayload;
 import com.example.inventorymanagement.model.entities.Category;
 import com.example.inventorymanagement.model.entities.Product;
 import com.example.inventorymanagement.model.entities.Store;
+import com.example.inventorymanagement.model.entities.StoreProduct;
 import com.example.inventorymanagement.model.enums.Actions;
+import com.example.inventorymanagement.model.enums.Cities;
+import com.example.inventorymanagement.model.enums.Regions;
 import com.example.inventorymanagement.model.enums.SortBy;
 import com.example.inventorymanagement.repository.CategoryRepository;
 import com.example.inventorymanagement.repository.ProductRepository;
+import com.example.inventorymanagement.repository.StoreProductRepository;
 import com.example.inventorymanagement.repository.StoreRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +34,7 @@ import org.springframework.data.domain.Pageable;
 import java.util.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductServiceTest {
+class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepositoryMock;
@@ -38,19 +43,63 @@ public class ProductServiceTest {
     @Mock
     private CategoryRepository categoryRepositoryMock;
     @Mock
+    private StoreProductRepository storeProductRepositoryMock;
+    @Mock
     private LogService logServiceMock;
     @InjectMocks
     private ProductService productService;
     private Product testProduct;
+    private Store testStore;
+
+    private StoreProduct testStoreProduct;
+
+    private StoreProductDTO testStoreProductDTO;
+
+    List<StoreProductDTO> storeProductDTOList = new ArrayList<>();
+    List<Integer> storeIdList = new ArrayList<>();
+
+    List<StoreProduct> storeProductList = new ArrayList<>();
+
+    List<Store> storeList = new ArrayList<>();
+
 
     @BeforeEach
     void setUp() {
+        testStore = new Store();
+        Date testDate = new Date();
+        testStore.setId(1);
+        testStore.setName("teststorename");
+        testStore.setAddress("teststoreaddress");
+        testStore.setRegion(Regions.AKDENIZ);
+        testStore.setCity(Cities.ADANA);
+        testStore.setCreateDate(testDate);
+        testStore.setUpdateDate(testDate);
+        testStore.setDeleted(false);
         testProduct = new Product(1, "testproduct", 1, 100, 10);
+        testStoreProductDTO = new StoreProductDTO();
+        testStoreProductDTO.setId(1);
+        testStoreProductDTO.setName("testStoreProductName");
+        testStoreProductDTO.setAddress("testadress");
+        testStoreProductDTO.setRegion(Regions.AKDENIZ);
+        testStoreProductDTO.setCity(Cities.ADANA);
+        testStoreProductDTO.setQuantity(100);
+        testStoreProductDTO.setProduct_id(1);
+
+        testStoreProduct = new StoreProduct();
+        testStoreProduct.setId(1);
+        testStoreProduct.setStore_id(1);
+        testStoreProduct.setProduct_id(1);
+        testStoreProduct.setQuantity(100);
+
+        storeProductDTOList.add(testStoreProductDTO);
+        storeIdList.add(1);
+        storeProductList.add(testStoreProduct);
+        storeList.add(testStore);
     }
 
     @DisplayName("getProductById should return a valid Product for the given input")
     @Test
-    public void testGetProductById_success() {
+    void testGetProductById_success() {
         GetProductByIdInput getProductByIdInput = new GetProductByIdInput(1);
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(getProductByIdInput.getId())).thenReturn(Optional.ofNullable(testProduct));
@@ -63,7 +112,7 @@ public class ProductServiceTest {
 
     @DisplayName("getProductById should fail with productNotFoundException message when product is deleted or not found")
     @Test
-    public void testGetProductById_productNotFoundException() {
+    void testGetProductById_productNotFoundException() {
         GetProductByIdInput getProductByIdInput = new GetProductByIdInput(1);
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(getProductByIdInput.getId())).thenReturn(Optional.empty());
@@ -75,98 +124,163 @@ public class ProductServiceTest {
 
     }
 
-    @DisplayName("getProductsByStoreAttribute should succeed and return a list of stores with filtered products")
+    @DisplayName("getProductsByRegion should succeed and return the StoreProductDTO list")
     @Test
-    public void testGetProductsByStoreAttribute_success() {
-        int productId = 1;
-        String filterField = "name";
-        GetProductByStoreAttributeInput input = new GetProductByStoreAttributeInput(productId, filterField);
+    void testGetProductsByRegion_success() {
+        GetProductsByRegionInput getProductsByRegionInput = new GetProductsByRegionInput(Regions.AKDENIZ, 1);
 
-        Product testProduct = new Product();
-        testProduct.setId(productId);
+        when(productRepositoryMock.findByIdAndIsDeletedFalse(getProductsByRegionInput.getProductId())).thenReturn(Optional.of(testProduct));
+        when(storeRepositoryMock.findByRegion(getProductsByRegionInput.getRegion())).thenReturn(Arrays.asList(1)); // Store IDs
+        when(storeProductRepositoryMock.findAllByIdIn(Arrays.asList(1), getProductsByRegionInput.getProductId())).thenReturn(Arrays.asList(testStoreProduct));
+        when(storeRepositoryMock.findAllByIdIn(Arrays.asList(1))).thenReturn(Arrays.asList(testStore));
+        List<StoreProductDTO> result = productService.getProductByRegion(getProductsByRegionInput);
 
-        Store store1 = new Store();
-        store1.setId(1);
-        store1.setName("Store 1");
-        store1.setProducts(Collections.singletonMap(productId, 10));
+        assertEquals(storeProductDTOList.get(0).getProduct_id(), result.get(0).getProduct_id());
 
-        Store store2 = new Store();
-        store2.setId(2);
-        store2.setName("Store 2");
-        store2.setProducts(Collections.singletonMap(productId, 5));
-
-        List<Integer> storeIds = Arrays.asList(store1.getId(), store2.getId());
-
-        when(productRepositoryMock.findByIdAndIsDeletedFalse(productId)).thenReturn(Optional.of(testProduct));
-        when(storeRepositoryMock.findStoreIdsByProductId(productId)).thenReturn(storeIds);
-        when(storeRepositoryMock.findStoresByStoreIdsAndAttribute(storeIds, filterField)).thenReturn(Arrays.asList(store1, store2));
-
-        //service method call
-        List<Store> result = productService.getProductsByStoreAttribute(input);
-
-        //comparing result with expected
-        assertNotNull(result);
-        assertEquals(2, result.size());
-
-        Store resultStore1 = result.get(0);
-        assertEquals(store1.getId(), resultStore1.getId());
-        assertEquals(store1.getName(), resultStore1.getName());
-        Map<Integer, Integer> expectedProducts1 = new HashMap<>(store1.getProducts());
-        expectedProducts1.put(productId, store1.getProducts().get(productId));
-        assertEquals(expectedProducts1, resultStore1.getProducts());
-
-        Store resultStore2 = result.get(1);
-        assertEquals(store2.getId(), resultStore2.getId());
-        assertEquals(store2.getName(), resultStore2.getName());
-        Map<Integer, Integer> expectedProducts2 = new HashMap<>(store2.getProducts());
-        expectedProducts2.put(productId, store2.getProducts().get(productId));
-        assertEquals(expectedProducts2, resultStore2.getProducts());
-
-        verify(productRepositoryMock, times(1)).findByIdAndIsDeletedFalse(productId);
-        verify(storeRepositoryMock, times(1)).findStoreIdsByProductId(productId);
-        verify(storeRepositoryMock, times(1)).findStoresByStoreIdsAndAttribute(storeIds, filterField);
     }
 
-    @DisplayName("getProductsByStoreAttribute should fail with productNotFoundException message")
+    @DisplayName("getProductsByRegion should failed and return ProductNotFound exception")
     @Test
-    public void testGetProductsByStoreAttribute_ProductNotFound() {
+    void testGetProductsByRegion_failed_productNotFoundException() {
+        GetProductsByRegionInput getProductsByRegionInput = new GetProductsByRegionInput(Regions.AKDENIZ, 1);
 
-        when(productRepositoryMock.findByIdAndIsDeletedFalse(anyInt())).thenReturn(Optional.empty());
+        when(productRepositoryMock.findByIdAndIsDeletedFalse(getProductsByRegionInput.getProductId())).thenReturn(Optional.empty());
 
-        CustomExceptions exception = assertThrows(CustomExceptions.class, () ->
-                productService.getProductsByStoreAttribute(new GetProductByStoreAttributeInput(1, "filterField")));
+        CustomExceptions exception = assertThrows(CustomExceptions.class,
+                () -> productService.getProductByRegion(getProductsByRegionInput));
 
         assertEquals("Product is not found", exception.getMessage());
+
+    }
+
+    @DisplayName("getProductsByCity should succeed and return the StoreProductDTO list")
+    @Test
+    void testGetProductsByCity_success() {
+        GetProductsByCityInput getProductsByCityInput = new GetProductsByCityInput(Cities.ADANA, 1);
+
+        when(productRepositoryMock.findByIdAndIsDeletedFalse(getProductsByCityInput.getProductId())).thenReturn(Optional.of(testProduct));
+        when(storeRepositoryMock.findByCity(getProductsByCityInput.getCity())).thenReturn(Arrays.asList(1)); // Store IDs
+        when(storeProductRepositoryMock.findAllByIdIn(Arrays.asList(1), getProductsByCityInput.getProductId())).thenReturn(Arrays.asList(testStoreProduct));
+        when(storeRepositoryMock.findAllByIdIn(Arrays.asList(1))).thenReturn(Arrays.asList(testStore));
+        List<StoreProductDTO> result = productService.getProductByCity(getProductsByCityInput);
+
+        assertEquals(storeProductDTOList.get(0).getProduct_id(), result.get(0).getProduct_id());
+
+    }
+
+     @DisplayName("getProductsByCity should failed and return ProductNotFound exception")
+     @Test
+     void testGetProductsByCity_failed_productNotFoundException() {
+         GetProductsByCityInput getProductsByCityInput = new GetProductsByCityInput(Cities.ADANA, 1);
+
+         when(productRepositoryMock.findByIdAndIsDeletedFalse(getProductsByCityInput.getProductId())).thenReturn(Optional.empty());
+
+         CustomExceptions exception = assertThrows(CustomExceptions.class,
+                 () -> productService.getProductByCity(getProductsByCityInput));
+
+         assertEquals("Product is not found", exception.getMessage());
+
+     }
+    @DisplayName("getProductInStore should success and return StoreProduct")
+    @Test
+    void testGetProductInStore_success() {
+        GetProductInStoreInput getProductInStoreInput = new GetProductInStoreInput(1, 1);
+
+        when(productRepositoryMock.findByIdAndIsDeletedFalse(getProductInStoreInput.getProductId())).thenReturn(Optional.ofNullable(testProduct));
+        when(storeRepositoryMock.findById(getProductInStoreInput.getStoreId())).thenReturn(Optional.ofNullable(testStore));
+        when(storeProductRepositoryMock.findByStore_idAndProduct_id(testStore.getId(), testProduct.getId())).thenReturn(Optional.ofNullable(testStoreProduct));
+
+        StoreProduct result = productService.getProductInStore(getProductInStoreInput);
+
+        assertEquals(testStoreProduct.getQuantity(), result.getQuantity());
+    }
+
+    @DisplayName("getProductInStore should failed and throw ProductNotFoundException")
+    @Test
+    void testGetProductInStore_failed_productNotFoundException() {
+        GetProductInStoreInput getProductInStoreInput = new GetProductInStoreInput(1, 1);
+
+        when(productRepositoryMock.findByIdAndIsDeletedFalse(getProductInStoreInput.getProductId())).thenReturn(Optional.empty());
+
+        CustomExceptions exception = assertThrows(CustomExceptions.class,
+                () -> productService.getProductInStore(getProductInStoreInput));
+
+        assertEquals("Product is not found", exception.getMessage());
+    }
+
+    @DisplayName("getProductInStore should failed and throw StoreNotFoundException")
+    @Test
+    void testGetProductInStore_failed_storeNotFoundException() {
+        GetProductInStoreInput getProductInStoreInput = new GetProductInStoreInput(1, 1);
+
+        when(productRepositoryMock.findByIdAndIsDeletedFalse(getProductInStoreInput.getProductId())).thenReturn(Optional.ofNullable(testProduct));
+        when(storeRepositoryMock.findById(getProductInStoreInput.getStoreId())).thenReturn(Optional.empty());
+        CustomExceptions exception = assertThrows(CustomExceptions.class,
+                () -> productService.getProductInStore(getProductInStoreInput));
+
+        assertEquals("Store not found", exception.getMessage());
+    }
+
+    @DisplayName("getProductInStore should failed and throw productNotInStoreException")
+    @Test
+    void testGetProductInStore_failed_productNotInStoreException() {
+        GetProductInStoreInput getProductInStoreInput = new GetProductInStoreInput(1, 1);
+
+        when(productRepositoryMock.findByIdAndIsDeletedFalse(getProductInStoreInput.getProductId())).thenReturn(Optional.ofNullable(testProduct));
+        when(storeRepositoryMock.findById(getProductInStoreInput.getStoreId())).thenReturn(Optional.ofNullable(testStore));
+        when(storeProductRepositoryMock.findByStore_idAndProduct_id(testStore.getId(), testProduct.getId())).thenReturn(Optional.empty());
+        CustomExceptions exception = assertThrows(CustomExceptions.class,
+                () -> productService.getProductInStore(getProductInStoreInput));
+
+        assertEquals("The product is not in the store", exception.getMessage());
     }
 
 
     @DisplayName("createProducts should succeed and return the created Product")
     @Test
-    public void testCreateProducts_success() {
-        CreateProductInput createProductInput = new CreateProductInput("NewProduct", 1, 10, 5);
-        when(productRepositoryMock.findByName("newproduct")).thenReturn(Optional.empty());
-        when(productRepositoryMock.save(any())).thenReturn(new Product());
+    void testCreateProducts_success() {
+        CreateProductInput createProductInput = new CreateProductInput("testproduct", 1, 10, 5);
+        Category category = new Category(1, "testcategory", null);
+        when(productRepositoryMock.findByName("testproduct")).thenReturn(Optional.empty());
+        when(categoryRepositoryMock.findById(createProductInput.getCategoryId())).thenReturn(Optional.of(category));
+        when(productRepositoryMock.save(any())).thenReturn(testProduct);
 
         Product createdProduct = productService.createProduct(createProductInput);
 
         assertNotNull(createdProduct);
-        assertEquals("newproduct", createdProduct.getName());
+        assertEquals("testproduct", createdProduct.getName());
 
         verify(logServiceMock, times(1)).logInfo(Actions.CREATE_PRODUCT.name() + " Product Id : " + createdProduct.getId());
 
     }
 
-    @DisplayName("createProduct should fail with ProductNameIsAlreadyExistException message")
+    @DisplayName("createProduct should failed with ProductNameIsAlreadyExistException message")
     @Test
-    void testCreateProduct_ProductNameAlreadyExists() {
+    void testCreateProduct_failed_productNameAlreadyExists() {
         CreateProductInput createProductInput = new CreateProductInput("ExistingProduct", 1, 10, 5);
-        when(productRepositoryMock.findByName("existingproduct")).thenReturn(Optional.of(testProduct));
+        Category category = new Category(1, "testcategory", null);
+        when(productRepositoryMock.findByName("existingproduct")).thenReturn(Optional.ofNullable(testProduct));
+        when(categoryRepositoryMock.findById(createProductInput.getCategoryId())).thenReturn(Optional.of(category));
 
         CustomExceptions exception = assertThrows(CustomExceptions.class, () ->
                 productService.createProduct(createProductInput)
         );
 
         assertEquals("Product name is already exist", exception.getMessage());
+    }
+
+    @DisplayName("createProduct should failed with CategoryNotFoundException")
+    @Test
+    void testCreateProduct_failed_categoryNotFoundException() {
+        CreateProductInput createProductInput = new CreateProductInput("ExistingProduct", 1, 10, 5);
+        when(productRepositoryMock.findByName("existingproduct")).thenReturn(Optional.empty());
+        when(categoryRepositoryMock.findById(createProductInput.getCategoryId())).thenReturn(Optional.empty());
+
+        CustomExceptions exception = assertThrows(CustomExceptions.class, () ->
+                productService.createProduct(createProductInput)
+        );
+
+        assertEquals("Category not found", exception.getMessage());
     }
 
     @DisplayName("deleteProduct should soft delete an existing product and return DeleteProductPayload")
@@ -185,7 +299,7 @@ public class ProductServiceTest {
 
     @DisplayName("deleteProduct should return false if the product is already deleted or does not exist")
     @Test
-    void testDeleteProduct_ProductAlreadyDeleted() {
+    void testDeleteProduct_ProductAlreadyDeletedException() {
         DeleteProductInput deleteProductInput = new DeleteProductInput(1);
         when(productRepositoryMock.findByIdAndIsDeletedFalse(1)).thenReturn(Optional.empty());
 
@@ -205,9 +319,11 @@ public class ProductServiceTest {
         updateProductInput.setCategoryId(2);
         updateProductInput.setQuantity(10);
         updateProductInput.setCriticalLevel(5);
+        Category category = new Category(2, "testcategory", null);
 
         when(productRepositoryMock.findByIdAndIsDeletedFalse(1)).thenReturn(Optional.of(testProduct));
         when(productRepositoryMock.findByName("NewProductName".toLowerCase())).thenReturn(Optional.empty());
+        when(categoryRepositoryMock.findById(updateProductInput.getCategoryId())).thenReturn(Optional.of(category));
 
         Product updatedProduct = productService.updateProduct(updateProductInput);
 
@@ -221,7 +337,7 @@ public class ProductServiceTest {
 
     }
 
-    @DisplayName("updateProduct should throw ProductNotFoundException for a not existing product")
+    @DisplayName("updateProduct should failed and throw ProductNotFoundException for a not existing product")
     @Test
     void testUpdateProduct_ProductNotFound() {
 
@@ -238,7 +354,7 @@ public class ProductServiceTest {
 
     @DisplayName("updateProduct should throw ProductNameIsAlreadExist for existing product-name")
     @Test
-    public void testUpdateProduct_ProductNameIsAlreadyExist() {
+    void testUpdateProduct_ProductNameIsAlreadyExist() {
         UpdateProductInput updateProductInput = new UpdateProductInput();
         updateProductInput.setId(1);
         updateProductInput.setName("NewProductName");
@@ -252,6 +368,25 @@ public class ProductServiceTest {
         CustomExceptions exception = assertThrows(CustomExceptions.class, () -> productService.updateProduct(updateProductInput));
 
         assertEquals("Product name is already exist", exception.getMessage());
+    }
+
+    @DisplayName("updateProduct should failed and throw categoryNotFoundException")
+    @Test
+    void testUpdateProduct_categoryNotFoundException() {
+        UpdateProductInput updateProductInput = new UpdateProductInput();
+        updateProductInput.setId(1);
+        updateProductInput.setName("NewProductName");
+        updateProductInput.setCategoryId(2);
+        updateProductInput.setQuantity(10);
+        updateProductInput.setCriticalLevel(5);
+
+        when(productRepositoryMock.findByIdAndIsDeletedFalse(1)).thenReturn(Optional.of(testProduct));
+        when(productRepositoryMock.findByName("NewProductName".toLowerCase())).thenReturn(Optional.empty());
+        when(categoryRepositoryMock.findById(updateProductInput.getCategoryId())).thenReturn(Optional.empty());
+
+        CustomExceptions exception = assertThrows(CustomExceptions.class, () -> productService.updateProduct(updateProductInput));
+
+        assertEquals("Category not found", exception.getMessage());
     }
 
     @DisplayName("getProductsByCategory should return products for a valid category")
@@ -278,6 +413,7 @@ public class ProductServiceTest {
 
     }
 
+
     @DisplayName("getProductsByCategory should throw CategoryNotFoundException for an invalid category")
     @Test
     void testGetProductsByCategory_CategoryNotFound() {
@@ -291,12 +427,15 @@ public class ProductServiceTest {
         assertEquals("Category not found", exception.getMessage());
     }
 
-
-
     @AfterEach
     void tearDown() {
         testProduct = null;
+        testStore = null;
+        testStoreProduct = null;
+        testStoreProductDTO = null;
+        storeProductDTOList = null;
+        storeIdList = null;
+        storeProductList = null;
+        storeList = null;
     }
-
-
 }

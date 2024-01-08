@@ -3,6 +3,7 @@ package com.example.inventorymanagement.model.entities;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.util.List;
@@ -21,8 +22,12 @@ public class Category extends BaseEntity{
     @Column(name = "name")
     private String name;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "categoryId", cascade = CascadeType.ALL ,fetch = FetchType.LAZY)
     private List<Product> products;
 
+    @Override
+    public String toString() {
+        return "Category{id=" + id + ", name='" + name + "'}";
+    }
 
 }

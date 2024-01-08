@@ -3,14 +3,14 @@ version: '3'
 services:
   mysqldb:
     container_name: mysqldb
-    image: mysql:latest
+    image: mysql:8.0.32
     environment:
       MYSQL_USER: db_user
       MYSQL_PASSWORD: db_password
       MYSQL_DATABASE: inventorymanagement
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - 3306:3306
+      - "3306:3306"
     volumes:
       - ./inventorymanagement.sql:/docker-entrypoint-initdb.d/inventorymanagement.sql
     networks:
@@ -20,7 +20,7 @@ services:
     image: phpmyadmin:latest
     container_name: phpmyadmin-container
     ports:
-      - 8081:80
+      - "8081:80"
     environment:
       PMA_HOST: mysqldb
       PMA_USER: db_user
@@ -40,7 +40,7 @@ services:
       - mysqldb
     environment:
       - spring.jpa.hibernate.ddl-auto=update
-      - spring.datasource.url=jdbc:mysql://mysqldb:3306/inventorymanagement
+      - spring.datasource.url=jdbc:mysql://mysqldb:3306/inventorymanagement?useSSL=false&allowPublicKeyRetrieval=true
       - spring.datasource.username=db_user
       - spring.datasource.password=db_password
       - spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
